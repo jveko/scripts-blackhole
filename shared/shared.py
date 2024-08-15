@@ -20,12 +20,6 @@ def integerEnvParser(value):
 def stringEnvParser(value):
     return commonEnvParser(value)
 
-watchlist = {
-    'plexProduct': env.string('WATCHLIST_PLEX_PRODUCT', default=None),
-    'plexVersion': env.string('WATCHLIST_PLEX_VERSION', default=None),
-    'plexClientIdentifier': env.string('WATCHLIST_PLEX_CLIENT_IDENTIFIER', default=None)
-}
-
 blackhole = {
     'baseWatchPath': env.string('BLACKHOLE_BASE_WATCH_PATH', default=None),
     'radarrPath': env.string('BLACKHOLE_RADARR_PATH', default=None),
@@ -40,20 +34,6 @@ server = {
     'host': env.string('SERVER_DOMAIN', default=None)
 }
 
-plex = {
-    'host': env.string('PLEX_HOST', default=None),
-    'metadataHost': env.string('PLEX_METADATA_HOST', default=None),
-    'serverHost': env.string('PLEX_SERVER_HOST', default=None),
-    'serverMachineId': env.string('PLEX_SERVER_MACHINE_ID', default=None),
-    'serverApiKey': env.string('PLEX_SERVER_API_KEY', default=None),
-    'serverMovieLibraryId': env.integer('PLEX_SERVER_MOVIE_LIBRARY_ID', default=None),
-    'serverTvShowLibraryId': env.integer('PLEX_SERVER_TV_SHOW_LIBRARY_ID', default=None)
-}
-
-overseerr = {
-    'host': env.string('OVERSEERR_HOST', default=None),
-    'apiKey': env.string('OVERSEERR_API_KEY', default=None)
-}
 
 sonarr = {
     'host': env.string('SONARR_HOST', default=None),
@@ -65,27 +45,12 @@ radarr = {
     'apiKey': env.string('RADARR_API_KEY', default=None)
 }
 
-tautulli = {
-    'host': env.string('TAUTULLI_HOST', default=None),
-    'apiKey': env.string('TAUTULLI_API_KEY', default=None)
-}
 
 realdebrid = {
     'enabled': env.bool('REALDEBRID_ENABLED', default=True),
     'host': env.string('REALDEBRID_HOST', default=None),
     'apiKey': env.string('REALDEBRID_API_KEY', default=None),
     'mountTorrentsPath': env.string('REALDEBRID_MOUNT_TORRENTS_PATH', env.string('BLACKHOLE_RD_MOUNT_TORRENTS_PATH', default=None))
-}
-
-torbox = {
-    'enabled': env.bool('TORBOX_ENABLED', default=None),
-    'host': env.string('TORBOX_HOST', default=None),
-    'apiKey': env.string('TORBOX_API_KEY', default=None),
-    'mountTorrentsPath': env.string('TORBOX_MOUNT_TORRENTS_PATH', default=None)
-}
-
-trakt = {
-    'apiKey': env.string('TRAKT_API_KEY', default=None)
 }
 
 discord = {
@@ -98,15 +63,6 @@ repair = {
     'repairInterval': env.string('REPAIR_REPAIR_INTERVAL', default=None),
     'runInterval': env.string('REPAIR_RUN_INTERVAL', default=None)
 }
-
-plexHeaders = {
-    'Accept': 'application/json',
-    'X-Plex-Product': watchlist['plexProduct'],
-    'X-Plex-Version': watchlist['plexVersion'],
-    'X-Plex-Client-Identifier': watchlist['plexClientIdentifier']
-}
-
-overseerrHeaders = {"X-Api-Key": f"{overseerr['apiKey']}"}
 
 pathToScript = os.path.dirname(os.path.abspath(__file__))
 tokensFilename = os.path.join(pathToScript, 'tokens.json')

@@ -6,7 +6,6 @@ import requests
 from abc import ABC, abstractmethod
 from urllib.parse import urljoin
 from datetime import datetime
-from shared.discord import discordUpdate
 from shared.requests import retryRequest
 from shared.shared import realdebrid, torbox, mediaExtensions, checkRequiredEnvs
 
@@ -255,11 +254,8 @@ class RealDebrid(TorrentBase):
                 extraFilesGroup = next((fileGroup for fileGroup in self._instantAvailability if largestMediaFileId in fileGroup.keys()), None)
                 if self.onlyLargestFile and extraFilesGroup:
                     self.print('extra files required for cache:', extraFilesGroup)
-                    discordUpdate('Extra files required for cache:', extraFilesGroup)
                 return False
             
-        if self.onlyLargestFile and len(mediaFiles) > 1:
-            discordUpdate('largest file:', largestMediaFile['path'])
                 
         files = {'files': [largestMediaFileId] if self.onlyLargestFile else ','.join(mediaFileIds)}
         selectFilesRequest = retryRequest(

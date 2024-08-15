@@ -2,7 +2,6 @@ import os
 import argparse
 import time
 import traceback
-import shared.debrid # Run validation
 from shared.arr import Sonarr, Radarr
 from shared.discord import discordUpdate, discordError
 from shared.shared import repair, realdebrid, torbox, intersperse

@@ -5,9 +5,9 @@ from shared.discord import discordError, discordUpdate
 
 
 def retryRequest(
-    requestFunc: Callable[[], requests.Response], 
-    print: Callable[..., None] = print, 
-    retries: int = 1, 
+    requestFunc: Callable[[], requests.Response],
+    print: Callable[..., None] = print,
+    retries: int = 1,
     delay: int = 1
 ) -> Optional[requests.Response]:
     """
@@ -38,8 +38,10 @@ def retryRequest(
                 if attempt == retries:
                     discordError("Request Failed", "\n".join(message))
                 else:
-                    update_message = message + [f"Retrying in {delay} seconds..."]
-                    discordUpdate("Retrying Request", "\n".join(update_message))
+                    update_message = message + \
+                        [f"Retrying in {delay} seconds..."]
+                    discordUpdate("Retrying Request",
+                                  "\n".join(update_message))
                     print(f"Retrying in {delay} seconds...")
                     time.sleep(delay)
         except requests.RequestException as e:
@@ -56,5 +58,5 @@ def retryRequest(
                 discordUpdate("Retrying Request", "\n".join(update_message))
                 print(f"Retrying in {delay} seconds...")
                 time.sleep(delay)
-    
+
     return None
