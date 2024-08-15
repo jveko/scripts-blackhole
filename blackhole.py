@@ -1,3 +1,4 @@
+import signal
 import shutil
 import time
 import traceback
@@ -12,12 +13,14 @@ from datetime import datetime
 from shared.discord import discordError, discordUpdate
 from shared.shared import realdebrid, blackhole, checkRequiredEnvs
 from shared.arr import Arr, Radarr, Sonarr
-from shared.debrid import TorrentBase, RealDebridTorrent, RealDebridMagnet, TorboxTorrent, TorboxMagnet
+from shared.debrid import TorrentBase, RealDebridTorrent, RealDebridMagnet
 
 _print = print
 
+
 def print(*values: object):
     _print(f"[{datetime.now()}]", *values)
+
 
 requiredEnvs = {
     'Blackhole base watch path': (blackhole['baseWatchPath'],),
@@ -30,6 +33,7 @@ requiredEnvs = {
 }
 
 checkRequiredEnvs(requiredEnvs)
+
 
 class TorrentFileInfo():
     class FileInfo():
@@ -53,26 +57,35 @@ class TorrentFileInfo():
         isTorrentOrMagnet = isDotTorrentFile or filename.casefold().endswith('.magnet')
         filenameWithoutExt, ext = os.path.splitext(filename)
         filePath = os.path.join(baseBath, filename)
-        filePathProcessing = os.path.join(baseBath, 'processing', f"{filenameWithoutExt}_{uniqueId}{ext}")
-        folderPathCompleted = os.path.join(baseBath, 'completed', filenameWithoutExt)
-        
-        self.fileInfo = self.FileInfo(filename, filenameWithoutExt, filePath, filePathProcessing, folderPathCompleted)
-        self.torrentInfo = self.TorrentInfo(isTorrentOrMagnet, isDotTorrentFile)
+        filePathProcessing = os.path.join(
+            baseBath, 'processing', f"{filenameWithoutExt}_{uniqueId}{ext}")
+        folderPathCompleted = os.path.join(
+            baseBath, 'completed', filenameWithoutExt)
+
+        self.fileInfo = self.FileInfo(
+            filename, filenameWithoutExt, filePath, filePathProcessing, folderPathCompleted)
+        self.torrentInfo = self.TorrentInfo(
+            isTorrentOrMagnet, isDotTorrentFile)
+
 
 def getPath(isRadarr, create=False):
     baseWatchPath = blackhole['baseWatchPath']
-    absoluteBaseWatchPath = baseWatchPath if os.path.isabs(baseWatchPath) else os.path.abspath(baseWatchPath)
-    finalPath = os.path.join(absoluteBaseWatchPath, blackhole['radarrPath'] if isRadarr else blackhole['sonarrPath'])
+    absoluteBaseWatchPath = baseWatchPath if os.path.isabs(
+        baseWatchPath) else os.path.abspath(baseWatchPath)
+    finalPath = os.path.join(
+        absoluteBaseWatchPath, blackhole['radarrPath'] if isRadarr else blackhole['sonarrPath'])
 
     if create:
         for sub_path in ['', 'processing', 'completed']:
             path_to_check = os.path.join(finalPath, sub_path)
             if not os.path.exists(path_to_check):
                 os.makedirs(path_to_check)
-        
+
     return finalPath
 
 # From Radarr Radarr/src/NzbDrone.Core/Organizer/FileNameBuilder.cs
+
+
 def cleanFileName(name):
     result = name
     badCharacters = ["\\", "/", "<", ">", "?", "*", ":", "|", "\""]
@@ -80,10 +93,12 @@ def cleanFileName(name):
 
     for i, char in enumerate(badCharacters):
         result = result.replace(char, goodCharacters[i])
-    
+
     return result.strip()
 
+
 refreshingTask = None
+
 
 async def refreshArr(arr: Arr, count=60):
     # TODO: Change to refresh until found/imported
@@ -103,6 +118,7 @@ async def refreshArr(arr: Arr, count=60):
     except asyncio.CancelledError:
         pass
 
+
 def copyFiles(file: TorrentFileInfo, folderPathMountTorrent, arr: Arr):
     # Consider removing this and always streaming
     try:
@@ -118,14 +134,16 @@ def copyFiles(file: TorrentFileInfo, folderPathMountTorrent, arr: Arr):
             if not os.path.exists(file.fileInfo.folderPathCompleted):
                 print('Deleted')
                 print('Copying actual files to arr folder...')
-                shutil.copytree(folderPathMountTorrent, file.fileInfo.folderPathCompleted)
-                arr.refreshMonitoredDownloads()   
-                print('Copied')          
+                shutil.copytree(folderPathMountTorrent,
+                                file.fileInfo.folderPathCompleted)
+                arr.refreshMonitoredDownloads()
+                print('Copied')
                 break
             time.sleep(1)
             if count == 180:
                 print('copyCount > 180')
-                discordError(f"{file.fileInfo.filenameWithoutExt} copy attempt acount > 180", "Shortcut has not finished importing yet")
+                discordError(f"{file.fileInfo.filenameWithoutExt} copy attempt acount > 180",
+                             "Shortcut has not finished importing yet")
 
     except:
         e = traceback.format_exc()
@@ -133,16 +151,17 @@ def copyFiles(file: TorrentFileInfo, folderPathMountTorrent, arr: Arr):
         print(f"Error copying files for {file.fileInfo.filenameWithoutExt}")
         print(e)
 
-        discordError(f"Error copying files for {file.fileInfo.filenameWithoutExt}", e)
+        discordError(
+            f"Error copying files for {file.fileInfo.filenameWithoutExt}", e)
 
-import signal
 
 async def processTorrent(torrent: TorrentBase, file: TorrentFileInfo, arr: Arr) -> bool:
     _print = globals()['print']
 
     def print(*values: object):
-        _print(f"[{torrent.__class__.__name__}] [{file.fileInfo.filenameWithoutExt}]", *values)
-        
+        _print(
+            f"[{torrent.__class__.__name__}] [{file.fileInfo.filenameWithoutExt}]", *values)
+
     if not torrent.submitTorrent():
         return False
 
@@ -154,7 +173,7 @@ async def processTorrent(torrent: TorrentBase, file: TorrentFileInfo, arr: Arr) 
             return False
 
         status = info['status']
-        
+
         print('status:', status)
 
         if status == torrent.STATUS_WAITING_FILES_SELECTION:
@@ -178,14 +197,15 @@ async def processTorrent(torrent: TorrentBase, file: TorrentFileInfo, arr: Arr) 
 
             while True:
                 existsCount += 1
-                
+
                 folderPathMountTorrent = await torrent.getTorrentPath()
                 if folderPathMountTorrent:
                     multiSeasonRegex1 = r'(?<=[\W_][Ss]eason[\W_])[\d][\W_][\d]{1,2}(?=[\W_])'
                     multiSeasonRegex2 = r'(?<=[\W_][Ss])[\d]{2}[\W_][Ss]?[\d]{2}(?=[\W_])'
                     multiSeasonRegexCombined = f'{multiSeasonRegex1}|{multiSeasonRegex2}'
 
-                    multiSeasonMatch = re.search(multiSeasonRegexCombined, file.fileInfo.filenameWithoutExt)
+                    multiSeasonMatch = re.search(
+                        multiSeasonRegexCombined, file.fileInfo.filenameWithoutExt)
 
                     for root, dirs, files in os.walk(folderPathMountTorrent):
                         relRoot = os.path.relpath(root, folderPathMountTorrent)
@@ -194,48 +214,62 @@ async def processTorrent(torrent: TorrentBase, file: TorrentFileInfo, arr: Arr) 
                             # if not await is_accessible(os.path.join(root, filename)):
                             #     print(f"Timeout reached when accessing file: {filename}")
                             #     discordError(f"Timeout reached when accessing file", filename)
-                                # Uncomment the following line to fail the entire torrent if the timeout on any of its files are reached
-                                # fail(torrent)
-                                # return
-                            
+                            # Uncomment the following line to fail the entire torrent if the timeout on any of its files are reached
+                            # fail(torrent)
+                            # return
+
                             if multiSeasonMatch:
-                                seasonMatch = re.search(r'S([\d]{2})E[\d]{2}', filename)
-                                
+                                seasonMatch = re.search(
+                                    r'S([\d]{2})E[\d]{2}', filename)
+
                                 if seasonMatch:
                                     season = seasonMatch.group(1)
                                     seasonShort = season[1:] if season[0] == '0' else season
 
-                                    seasonFolderPathCompleted = re.sub(multiSeasonRegex1, seasonShort, file.fileInfo.folderPathCompleted)
-                                    seasonFolderPathCompleted = re.sub(multiSeasonRegex2, season, seasonFolderPathCompleted)
+                                    seasonFolderPathCompleted = re.sub(
+                                        multiSeasonRegex1, seasonShort, file.fileInfo.folderPathCompleted)
+                                    seasonFolderPathCompleted = re.sub(
+                                        multiSeasonRegex2, season, seasonFolderPathCompleted)
 
-                                    os.makedirs(os.path.join(seasonFolderPathCompleted, relRoot), exist_ok=True)
-                                    os.symlink(os.path.join(root, filename), os.path.join(seasonFolderPathCompleted, relRoot, filename))
-                                    print('Season Recursive:', f"{os.path.join(seasonFolderPathCompleted, relRoot, filename)} -> {os.path.join(root, filename)}")
+                                    os.makedirs(os.path.join(
+                                        seasonFolderPathCompleted, relRoot), exist_ok=True)
+                                    os.symlink(os.path.join(root, filename), os.path.join(
+                                        seasonFolderPathCompleted, relRoot, filename))
+                                    print(
+                                        'Season Recursive:', f"{os.path.join(seasonFolderPathCompleted, relRoot, filename)} -> {os.path.join(root, filename)}")
                                     continue
 
+                            os.makedirs(os.path.join(
+                                file.fileInfo.folderPathCompleted, relRoot), exist_ok=True)
+                            os.symlink(os.path.join(root, filename), os.path.join(
+                                file.fileInfo.folderPathCompleted, relRoot, filename))
+                            print(
+                                'Recursive:', f"{os.path.join(file.fileInfo.folderPathCompleted, relRoot, filename)} -> {os.path.join(root, filename)}")
 
-                            os.makedirs(os.path.join(file.fileInfo.folderPathCompleted, relRoot), exist_ok=True)
-                            os.symlink(os.path.join(root, filename), os.path.join(file.fileInfo.folderPathCompleted, relRoot, filename))
-                            print('Recursive:', f"{os.path.join(file.fileInfo.folderPathCompleted, relRoot, filename)} -> {os.path.join(root, filename)}")
-                    
                     print('Refreshed')
-                    discordUpdate(f"Sucessfully processed {file.fileInfo.filenameWithoutExt}", f"Now available for immediate consumption! existsCount: {existsCount}")
+                    discordUpdate(f"Sucessfully processed {file.fileInfo.filenameWithoutExt}",
+                                  f"Now available for immediate consumption! existsCount: {existsCount}")
                     await refreshArr(arr)
                     return True
-                
+
                 if existsCount >= blackhole['rdMountRefreshSeconds'] + 1:
-                    print(f"Torrent folder not found in filesystem: {file.fileInfo.filenameWithoutExt}")
-                    discordError("Torrent folder not found in filesystem", file.fileInfo.filenameWithoutExt)
+                    print(
+                        f"Torrent folder not found in filesystem: {file.fileInfo.filenameWithoutExt}")
+                    discordError("Torrent folder not found in filesystem",
+                                 file.fileInfo.filenameWithoutExt)
 
                     return False
 
                 await asyncio.sleep(1)
-    
+
         if torrent.failIfNotCached and count >= blackhole['waitForTorrentTimeout']:
-            print(f"Torrent timeout: {file.fileInfo.filenameWithoutExt} - {status}")
-            discordError("Torrent timeout", f"{file.fileInfo.filenameWithoutExt} - {status}")
+            print(
+                f"Torrent timeout: {file.fileInfo.filenameWithoutExt} - {status}")
+            discordError("Torrent timeout",
+                         f"{file.fileInfo.filenameWithoutExt} - {status}")
 
             return False
+
 
 async def processFile(file: TorrentFileInfo, arr: Arr, isRadarr):
     try:
@@ -263,28 +297,33 @@ async def processFile(file: TorrentFileInfo, arr: Arr, isRadarr):
                 finally:
                     executor.shutdown(wait=False)
 
-        time.sleep(.1) # Wait before processing the file in case it isn't fully written yet.
+        # Wait before processing the file in case it isn't fully written yet.
+        time.sleep(.1)
         os.renames(file.fileInfo.filePath, file.fileInfo.filePathProcessing)
 
         with open(file.fileInfo.filePathProcessing, 'rb' if file.torrentInfo.isDotTorrentFile else 'r') as f:
             fileData = f.read()
             f.seek(0)
-            
+
             torrentConstructors = []
             if realdebrid['enabled']:
-                torrentConstructors.append(RealDebridTorrent if file.torrentInfo.isDotTorrentFile else RealDebridMagnet)
+                torrentConstructors.append(
+                    RealDebridTorrent if file.torrentInfo.isDotTorrentFile else RealDebridMagnet)
 
-            onlyLargestFile = isRadarr or bool(re.search(r'S[\d]{2}E[\d]{2}(?![\W_][\d]{2}[\W_])', file.fileInfo.filename))
+            onlyLargestFile = isRadarr or bool(
+                re.search(r'S[\d]{2}E[\d]{2}(?![\W_][\d]{2}[\W_])', file.fileInfo.filename))
             if not blackhole['failIfNotCached']:
-                torrents = [constructor(f, fileData, file, blackhole['failIfNotCached'], onlyLargestFile) for constructor in torrentConstructors]
+                torrents = [constructor(f, fileData, file, blackhole['failIfNotCached'],
+                                        onlyLargestFile) for constructor in torrentConstructors]
                 results = await asyncio.gather(*(processTorrent(torrent, file, arr) for torrent in torrents))
-                
+
                 if not any(results):
                     await asyncio.gather(*(fail(torrent, arr) for torrent in torrents))
             else:
                 for i, constructor in enumerate(torrentConstructors):
                     isLast = (i == len(torrentConstructors) - 1)
-                    torrent = constructor(f, fileData, file, blackhole['failIfNotCached'], onlyLargestFile)
+                    torrent = constructor(
+                        f, fileData, file, blackhole['failIfNotCached'], onlyLargestFile)
 
                     if await processTorrent(torrent, file, arr):
                         break
@@ -300,31 +339,38 @@ async def processFile(file: TorrentFileInfo, arr: Arr, isRadarr):
 
         discordError(f"Error processing {file.fileInfo.filenameWithoutExt}", e)
 
+
 async def fail(torrent: TorrentBase, arr: Arr):
     _print = globals()['print']
 
     def print(*values: object):
-        _print(f"[{torrent.__class__.__name__}] [{torrent.file.fileInfo.filenameWithoutExt}]", *values)
+        _print(
+            f"[{torrent.__class__.__name__}] [{torrent.file.fileInfo.filenameWithoutExt}]", *values)
 
     print(f"Failing")
-    
+
     torrentHash = torrent.getHash()
     history = await asyncio.to_thread(arr.getHistory, blackhole['historyPageSize'])
-    items = [item for item in history if (item.torrentInfoHash and item.torrentInfoHash.casefold() == torrentHash.casefold()) or cleanFileName(item.sourceTitle.casefold()) == torrent.file.fileInfo.filenameWithoutExt.casefold()]
+    items = [item for item in history if (item.torrentInfoHash and item.torrentInfoHash.casefold() == torrentHash.casefold(
+    )) or cleanFileName(item.sourceTitle.casefold()) == torrent.file.fileInfo.filenameWithoutExt.casefold()]
     if not items:
         message = "No history items found to mark as failed. Arr will not attempt to grab an alternative."
         print(message)
         discordError(message, torrent.file.fileInfo.filenameWithoutExt)
     else:
         # TODO: See if we can fail without blacklisting as cached items constantly changes
-        failTasks = [asyncio.to_thread(arr.failHistoryItem, item.id) for item in items]
+        failTasks = [asyncio.to_thread(
+            arr.failHistoryItem, item.id) for item in items]
         await asyncio.gather(*failTasks)
     print(f"Failed")
-    
+
+
 def getFiles(isRadarr):
     print('getFiles')
-    files = (TorrentFileInfo(filename, isRadarr) for filename in os.listdir(getPath(isRadarr)) if filename not in ['processing', 'completed'])
+    files = (TorrentFileInfo(filename, isRadarr) for filename in os.listdir(
+        getPath(isRadarr)) if filename not in ['processing', 'completed'])
     return [file for file in files if file.torrentInfo.isTorrentOrMagnet]
+
 
 async def on_created(isRadarr):
     print("Enter 'on_created'")
@@ -338,12 +384,13 @@ async def on_created(isRadarr):
 
         futures: list[asyncio.Future] = []
         firstGo = True
-        
+
         # Consider switching to a queue
         while firstGo or not all(future.done() for future in futures):
             files = getFiles(isRadarr)
             if files:
-                futures.append(asyncio.gather(*(processFile(file, arr, isRadarr) for file in files)))
+                futures.append(asyncio.gather(
+                    *(processFile(file, arr, isRadarr) for file in files)))
             elif firstGo:
                 print('No torrent files found')
             firstGo = False
