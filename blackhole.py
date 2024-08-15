@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 # import urllib
 from shared.discord import discordError, discordUpdate
-from shared.shared import realdebrid, torbox, blackhole, plex, checkRequiredEnvs
+from shared.shared import realdebrid, blackhole, checkRequiredEnvs
 from shared.arr import Arr, Radarr, Sonarr
 from shared.debrid import TorrentBase, RealDebridTorrent, RealDebridMagnet, TorboxTorrent, TorboxMagnet
 
@@ -211,29 +211,16 @@ async def processTorrent(torrent: TorrentBase, file: TorrentFileInfo, arr: Arr) 
                                     os.makedirs(os.path.join(seasonFolderPathCompleted, relRoot), exist_ok=True)
                                     os.symlink(os.path.join(root, filename), os.path.join(seasonFolderPathCompleted, relRoot, filename))
                                     print('Season Recursive:', f"{os.path.join(seasonFolderPathCompleted, relRoot, filename)} -> {os.path.join(root, filename)}")
-                                    # refreshEndpoint = f"{plex['serverHost']}/library/sections/{plex['serverMovieLibraryId'] if isRadarr else plex['serverTvShowLibraryId']}/refresh?path={urllib.parse.quote_plus(os.path.join(seasonFolderPathCompleted, relRoot))}&X-Plex-Token={plex['serverApiKey']}"
-                                    # cancelRefreshRequest = requests.delete(refreshEndpoint, headers={'Accept': 'application/json'})
-                                    # refreshRequest = requests.get(refreshEndpoint, headers={'Accept': 'application/json'})
-
                                     continue
 
 
                             os.makedirs(os.path.join(file.fileInfo.folderPathCompleted, relRoot), exist_ok=True)
                             os.symlink(os.path.join(root, filename), os.path.join(file.fileInfo.folderPathCompleted, relRoot, filename))
                             print('Recursive:', f"{os.path.join(file.fileInfo.folderPathCompleted, relRoot, filename)} -> {os.path.join(root, filename)}")
-                            # refreshEndpoint = f"{plex['serverHost']}/library/sections/{plex['serverMovieLibraryId'] if isRadarr else plex['serverTvShowLibraryId']}/refresh?path={urllib.parse.quote_plus(os.path.join(file.fileInfo.folderPathCompleted, relRoot))}&X-Plex-Token={plex['serverApiKey']}"
-                            # cancelRefreshRequest = requests.delete(refreshEndpoint, headers={'Accept': 'application/json'})
-                            # refreshRequest = requests.get(refreshEndpoint, headers={'Accept': 'application/json'})
                     
                     print('Refreshed')
                     discordUpdate(f"Sucessfully processed {file.fileInfo.filenameWithoutExt}", f"Now available for immediate consumption! existsCount: {existsCount}")
-                    
-                    # refreshEndpoint = f"{plex['serverHost']}/library/sections/{plex['serverMovieLibraryId'] if isRadarr else plex['serverTvShowLibraryId']}/refresh?X-Plex-Token={plex['serverApiKey']}"
-                    # cancelRefreshRequest = requests.delete(refreshEndpoint, headers={'Accept': 'application/json'})
-                    # refreshRequest = requests.get(refreshEndpoint, headers={'Accept': 'application/json'})
                     await refreshArr(arr)
-
-                    # await asyncio.get_running_loop().run_in_executor(None, copyFiles, file, folderPathMountTorrent, arr)
                     return True
                 
                 if existsCount >= blackhole['rdMountRefreshSeconds'] + 1:
@@ -286,8 +273,6 @@ async def processFile(file: TorrentFileInfo, arr: Arr, isRadarr):
             torrentConstructors = []
             if realdebrid['enabled']:
                 torrentConstructors.append(RealDebridTorrent if file.torrentInfo.isDotTorrentFile else RealDebridMagnet)
-            if torbox['enabled']:
-                torrentConstructors.append(TorboxTorrent if file.torrentInfo.isDotTorrentFile else TorboxMagnet)
 
             onlyLargestFile = isRadarr or bool(re.search(r'S[\d]{2}E[\d]{2}(?![\W_][\d]{2}[\W_])', file.fileInfo.filename))
             if not blackhole['failIfNotCached']:
