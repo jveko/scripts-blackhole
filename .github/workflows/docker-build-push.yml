@@ -19,8 +19,6 @@ jobs:
         include:
           - dockerfile: ./Dockerfile.blackhole
             image: ghcr.io/${{ github.repository }}/blackhole
-          - dockerfile: ./Dockerfile.scripts
-            image: ghcr.io/${{ github.repository }}/scripts
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
