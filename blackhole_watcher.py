@@ -2,7 +2,7 @@ import asyncio
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from blackhole import on_created, getPath
-
+import time
 class BlackholeHandler(FileSystemEventHandler):
     def __init__(self, is_radarr):
         super().__init__()
@@ -45,4 +45,7 @@ async def main():
 
 
 if __name__ == "__main__":
+    print("Starting blackhole watcher in 5 seconds")
+    time.sleep(5)
+    print("Starting blackhole watcher")
     asyncio.run(main())
