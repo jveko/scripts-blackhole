@@ -45,7 +45,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    print("Starting blackhole watcher in 5 seconds")
-    time.sleep(5)
-    print("Starting blackhole watcher")
     asyncio.run(main())
