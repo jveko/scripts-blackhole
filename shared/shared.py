@@ -30,10 +30,6 @@ blackhole = {
     'historyPageSize': env.integer('BLACKHOLE_HISTORY_PAGE_SIZE', default=None),
 }
 
-server = {
-    'host': env.string('SERVER_DOMAIN', default=None)
-}
-
 
 sonarr = {
     'host': env.string('SONARR_HOST', default=None),
@@ -54,8 +50,8 @@ realdebrid = {
 }
 
 discord = {
-    'enabled': env.bool('DISCORD_ENABLED', default=None),
-    'updateEnabled': env.bool('DISCORD_UPDATE_ENABLED', default=None),
+    'enabled': env.bool('DISCORD_ENABLED', default=False),
+    'updateEnabled': env.bool('DISCORD_UPDATE_ENABLED', default=False),
     'webhookUrl': env.string('DISCORD_WEBHOOK_URL', default=None)
 }
 
