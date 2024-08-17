@@ -1,11 +1,9 @@
-import signal
 import shutil
 import time
 import traceback
 import os
 import sys
 import re
-import requests
 import asyncio
 import uuid
 from datetime import datetime
