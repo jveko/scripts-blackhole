@@ -19,4 +19,6 @@ RUN grep -E "#.*($SERVICE_NAME|all)" requirements.txt | awk '{print $0}' > servi
 # Copy the rest of the application
 COPY . .
 
-CMD ["python", "blackhole_watcher.py"]
+ENTRYPOINT ["python"]
+CMD ["blackhole_watcher.py"]
+
