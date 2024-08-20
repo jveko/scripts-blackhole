@@ -48,7 +48,6 @@ class TorrentFileInfo():
             self.isDotTorrentFile = isDotTorrentFile
 
     def __init__(self, filename, isRadarr) -> None:
-        print('filename:', filename)
         baseBath = getPath(isRadarr)
         uniqueId = str(uuid.uuid4())[:8]  # Generate a unique identifier
         isDotTorrentFile = filename.casefold().endswith('.torrent')
